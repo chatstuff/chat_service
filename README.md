@@ -1,0 +1,2 @@
+- Install npm and nodejs
+- Run server using `npm start`
