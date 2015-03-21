@@ -1,2 +1,2 @@
 - Install npm and nodejs
-- Run server using `npm start`
+- Run server using `NODE_ENV=development npm start`
