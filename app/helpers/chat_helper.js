@@ -1,12 +1,14 @@
 const SOCKET_EVENT_CHAT = 'chat';
 
-var handleChatMsg = function (socket, msg, callback) {
-	logger.info("Chat message received from socket id: " + socket.id + " message: " + msg);
+var handleChatMsg = function (socket, msg, clientCallback, clientListCallback) {
+	logger.info("Chat message received from socket id: " + socket.id + " message: " + JSON.stringify(msg));
 	if (!msg.clientId) {
-		callback(new Error("Invalid clientId"), null);
+		clientCallback(new Error("Invalid clientId"), null);
 	}
 	else {
+		clientCallback(null, {text: 'chat_success'});
 		// Fetch nearby clients from location_manager
+		clientListCallback(null, ['244343', '65546365'])
 	}
 };
 

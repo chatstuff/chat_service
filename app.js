@@ -22,6 +22,13 @@ GLOBAL.logger = log4js.getLogger('chat_service');
 
 GLOBAL.httpClient = require('http');
 
+process.on('uncaughtException', function (err) {
+  logger.error('****************UNCAUGHT EXCEPTION*******************');
+  logger.error(err);
+  console.log('****************UNCAUGHT EXCEPTION*******************');
+  console.log(err);
+});
+
 require('./app/server.js');
 
 process.on('exit', function(){

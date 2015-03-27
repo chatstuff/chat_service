@@ -7,7 +7,7 @@
 ### Configuring nginx for load balancing
 - Install nginx
 - Add ```127.0.0.1 chat_service``` in `/etc/hosts`
-- Add this to `nginx.conf` `http` area, assuming that servers are running on local machine on ports `3700` and `3702`
+- Add this to `nginx.conf` `http` area, assuming that servers are running on local machine on ports `3705`, `3706` and `3707`
 ```
 map $http_upgrade $connection_upgrade {
   default upgrade;
@@ -15,8 +15,9 @@ map $http_upgrade $connection_upgrade {
 }
 upstream websocket {
   ip_hash;
-  server chat_service:3700;
-  server chat_service:3702;
+  server chat_service:3705;
+  server chat_service:3706;
+  server chat_service:3707;
 }
 server {
   listen 8080;
@@ -30,3 +31,4 @@ server {
 ```
 - ```sudo nginx -s reopen``` or ```sudo nginx -s reload``` or ```sudo nginx``` (etc) whichever applicable
 - Connect client on `ws://chat_service:8080`
+- `ip_hash` is for sticky sessions
