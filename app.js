@@ -20,7 +20,21 @@ log4js.configure({
 
 GLOBAL.logger = log4js.getLogger('chat_service');
 
+GLOBAL.os = require("os");
 GLOBAL.httpClient = require('http');
+
+//By default, if there is no active connection to the redis server, commands are added to a queue and 
+//are executed once the connection has been established. Setting enable_offline_queue to false will disable this feature
+redisOptions = {enable_offline_queue: false};
+GLOBAL.redisClient = require("redis").createClient(process.env.REDIS_PORT, process.env.REDIS_HOST, redisOptions);
+
+redisClient.on('error', function(err){
+  logger.error('Redis client error. Error: ' + err.message);
+});
+
+redisClient.on('connect', function(err){
+  logger.info('Redis connection established');
+});
 
 process.on('uncaughtException', function (err) {
   logger.error('****************UNCAUGHT EXCEPTION*******************');
