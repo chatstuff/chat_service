@@ -69,12 +69,13 @@ else{
       clientHelper.handleRegistrationMsg(socket, data, function(err){
         if (err){
           logger.error("Error while registration of client: " + JSON.stringify(data) + " error: " + err.message);
-          callback(err, null);
+          callback(err.message, null);
         }
         else {
           // Figure out what do do when server restarts, registrations have to be removed from redis
           // maybe store hostname as well in key and delete all on clean exit
           // what to do for unclean exit?
+          // What about handling uniqueness of socket ids across servers?
           logger.debug("Successfully registered a client: " + JSON.stringify(data));
           callback(null, {staus: 'success'});
         }
@@ -96,11 +97,11 @@ else{
           logger.error('Error getting chat recipients. Error: ' + err.message);
         }
         else {
-          logger.error('Chat recipients: ' + JSON.stringify(clientList));
+          logger.debug('Chat recipients: ' + JSON.stringify(clientList));
           // send message to the clients in clientList
           // They might be on different host or on different process on the same host
-          // use redis or something for different host and cluster messaging for same host
-          process.send({cmd: 'broadcast', socket_event: chatHelper.SOCKET_EVENT_CHAT, data: {clientIds: clientList}});
+          // use shared memory for different host and cluster messaging for same host
+          process.send({cmd: 'broadcast', socket_event: chatHelper.SOCKET_EVENT_CHAT, data: {clientIds: clientList, text: data.text}});
         }
       });
     });
@@ -109,11 +110,24 @@ else{
   process.on('message', function(msg) {
     if (msg.socket_event) {
       switch (msg.socket_event) {
-        case clientHelper.SOCKET_EVENT_REGISTER:
-          logger.debug ("Received registration message in worker: " + JSON.stringify(msg));
-        break;
         case chatHelper.SOCKET_EVENT_CHAT:
           logger.debug ("Received chat message in worker: " + JSON.stringify(msg));
+          for (var clientId in msg.data.clientIds){
+            logger.debug ("processing chat for client: " + clientId + ' socket id: ' + msg.data.clientIds[clientId]);
+            if (io.sockets.connected[msg.data.clientIds[clientId]]){
+              io.sockets.connected[msg.data.clientIds[clientId]].emit("chat", { text: msg.data.text }, function(err, data){
+                if (err) {
+                  logger.error('Error sending chat. Error: ' + err.message + ' recipients: ' + JSON.stringify(msg));
+                }
+                else {
+                  logger.debug('Chat sent Successfully for client: ' + clientId + ' text: ' + msg.data.text);
+                }
+              });
+            }
+            else{
+              logger.debug(clientId + " is not connected to port: " + port);
+            }
+          }
         break;
       }
     }
